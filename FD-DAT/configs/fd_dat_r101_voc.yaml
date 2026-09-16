@@ -1,0 +1,66 @@
+experiment:
+  name: fd_dat_r101_gf3_to_ssdd
+  seed: 42
+  output_dir: outputs/fd_dat_r101_gf3_to_ssdd
+
+data:
+  format: pascal_voc
+  source_root: data/GF3
+  target_root: data/SSDD
+  source_train_split: train
+  target_train_split: train
+  target_eval_split: test
+  image_size: [800, 800]
+  num_classes: 1
+  class_names: [ship]
+
+model:
+  base_detector: deformable_detr
+  backbone: resnet101
+  pretrained_backbone: imagenet
+  hidden_dim: 256
+  feature_levels: 4
+  object_queries: 300
+  encoder_layers: 6
+  decoder_layers: 6
+  attention_heads: 8
+  sampling_points: 4
+  ffn_dim: 1024
+  dropout: 0.1
+  inn:
+    blocks: 4
+    gamma: 1.0
+    subnet_hidden_dim: 256
+    permutation_seed: 3407
+  gradient_mask:
+    warmup_epochs: 5
+    threshold: median
+  pseudo_labels:
+    cosine_distance_threshold: 0.05
+    minimum_per_class: 2
+    spherical_kmeans_iterations: 10
+
+loss:
+  cdd_weight: 0.8
+  regularization_weight: 0.6
+  consistency_weight: 0.2
+  localization_consistency_weight: 0.3
+  # The paper shows a GRL/domain discriminator but does not report an
+  # explicit adversarial coefficient in Eq. (26). Keep this separately
+  # configurable and report it in every reproduction run.
+  adversarial_weight: 0.1
+  mmd_sigma_squared: [0.25, 0.5, 1.0, 2.0, 4.0]
+
+optimizer:
+  name: sgd
+  epochs: 50
+  batch_size: 16
+  backbone_lr: 1.0e-5
+  transformer_lr: 1.0e-4
+  momentum: 0.9
+  weight_decay: 1.0e-4
+  scheduler:
+    name: step
+    step_epoch: 40
+    gamma: 0.1
+
